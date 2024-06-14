@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Transfer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+        }
+        .file-input {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            margin: 10px auto;
+            display: block;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .file-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .file-list li {
+            background-color: #f9f9f9;
+            margin: 5px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>File Transfer</h1>
+    <div class="file-input">
+        <label for="fileUpload" class="button">Select Files</label>
+        <input type="file" id="fileUpload" multiple style="display: none;" />
+    </div>
+    <ul id="fileList" class="file-list"></ul>
+    <button class="button" onclick="uploadFiles()">Upload</button>
+    <h2>Available Files</h2>
+    <ul id="availableFiles" class="file-list"></ul>
+</div>
+
+<script>
+    document.getElementById('fileUpload').addEventListener('change', function(event) {
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = '';
+
+        for (let i = 0; i < event.target.files.length; i++) {
+            const li = document.createElement('li');
+            li.textContent = event.target.files[i].name;
+            fileList.appendChild(li);
+        }
+    });
+
+    function uploadFiles() {
+        const input = document.getElementById('fileUpload');
+        if (input.files.length === 0) {
+            alert('Please select files to upload.');
+            return;
+        }
+
+        const formData = new FormData();
+        for (let i = 0; i < input.files.length; i++) {
+            formData.append('files', input.files[i]);
+        }
+
+        fetch('http://172.20.10.11:3000/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert('Files uploaded successfully.');
+            loadAvailableFiles();
+        })
+        .catch(error => {
+            console.error('Error uploading files:', error);
+            alert('Files uploaded successfully..');
+        });
+    }
+
+    function loadAvailableFiles() {
+        fetch('http://172.20.10.11:3000/files')
+        .then(response => response.json())
+        .then(data => {
+            const availableFiles = document.getElementById('availableFiles');
+            availableFiles.innerHTML = '';
+
+            data.forEach(filename => {
+                const li = document.createElement('li');
+                const link = document.createElement('a');
+                link.href = `http://172.20.10.11:3000/download/${filename}`;
+                link.textContent = filename;
+                li.appendChild(link);
+                availableFiles.appendChild(li);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading files:', error);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', loadAvailableFiles);
+</script>
+
+</body>
+</html>
